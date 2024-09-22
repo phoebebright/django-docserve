@@ -1,11 +1,12 @@
 # Docserve
 
-**Docserve** purise is to make it easier to produce documentation for a project where you want to show different documentation to users with different roles.
-
+**Docserve** purpose is to make it easier to produce documentation for a project where you want to show different documentation to users with different roles.
 
 **Warning (or not)**: much of this code produced with gpt 01-preview
 
-
+This simple library solves the following problems:
+- serve docs appropriate to the user's role, and only those docs.
+- avoid having to create yml files for the docs I create, just assume all the docs in a role folder are to be included
 
 ## Features
 
@@ -93,6 +94,34 @@ for role in roles:
 Assign Users to Groups
 
 Use the Django admin interface or scripts to assign users to the appropriate groups.
+
+
+## Management Commands
+
+### Generating MkDocs Configuration Files
+
+Use the `generate_mkdocs_yml` command to generate `mkdocs.yml` files for each role:
+
+```bash
+python manage.py generate_mkdocs_yml
+
+This command creates MkDocs configuration files for each role based on the templates provided in the docserve app. You can customize these templates as needed.
+
+
+---
+
+### 6. Ensure MkDocs is Available
+
+Since the management commands call `mkdocs` via subprocess, ensure that `mkdocs` is installed in your environment.
+
+Add `mkdocs` to your `requirements.txt`:
+
+```txt
+Django>=3.2,<5.0
+mkdocs>=1.4.2
+mkdocs-material>=9.1.15
+PyYAML>=5.4
+
 
 Usage
 Generate Documentation with MkDocs
