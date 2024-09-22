@@ -1,0 +1,16 @@
+<!-- docserve/templates/docserve/docs_home.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Documentation Home</title>
+</head>
+<body>
+    <h1>Available Documentation</h1>
+    <ul>
+        {% for role in roles %}
+            <li><a href="{% url 'docserve:serve_docs_index' role=role %}">{{ role|title }} Documentation</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

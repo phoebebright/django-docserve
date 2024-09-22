@@ -1,0 +1,5 @@
+# MANIFEST.in
+
+recursive-include docserve/static *
+recursive-include docserve/templates *
+recursive-include docserve/management *
