@@ -12,7 +12,7 @@ import mimetypes
 def docs_home(request):
     # Get the list of roles the user has
     user_roles = request.user.groups.values_list('name', flat=True)
-    return render(request, 'docs_home.html', {'roles': user_roles})
+    return render(request, 'docserve/docs_home.html', {'roles': user_roles})
 
 @login_required
 def serve_docs(request, role, path=''):
