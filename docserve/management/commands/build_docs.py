@@ -11,11 +11,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         docs_root = getattr(settings, 'DOCSERVE_DOCS_ROOT', os.path.join(settings.BASE_DIR, 'docs'))
-        static_root = getattr(settings, 'DOCSERVE_DOCS_SITE', os.path.join(settings.BASE_DIR, 'docs_site'))
+        output_root = getattr(settings, 'DOCSERVE_DOCS_SITE_ROOT', os.path.join(settings.BASE_DIR, 'docs_site'))
 
-        # create static_root directory if it does not exist
-        if not os.path.exists(static_root):
-            os.makedirs(static_root)
+        # create output_root directory if it does not exist
+        if not os.path.exists(output_root):
+            os.makedirs(output_root)
 
         roles = [d for d in os.listdir(docs_root) if os.path.isdir(os.path.join(docs_root, d))]
 
@@ -25,7 +25,7 @@ class Command(BaseCommand):
 
         for role in roles:
             mkdocs_yml = os.path.join(docs_root, f'mkdocs_{role}.yml')
-            output_dir = os.path.join(static_root, role)
+            output_dir = os.path.join(output_root, role)
 
             if not os.path.exists(mkdocs_yml):
                 self.stdout.write(self.style.WARNING(f"Configuration file '{mkdocs_yml}' not found. Generating..."))
