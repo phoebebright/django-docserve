@@ -99,6 +99,8 @@ Each time you change the .md files, you will need to rebuild your docs.  To do t
 
 To modify the index page, look at the page in docserve/templates/home_page.html and put your customised version into your project's templates directory under a docserve directory.
 
+To customise the doc pages 
+
 ## URLs
 
 If you don't want to use the /docs url, modify the url root in your urls.py, it should just work!
@@ -106,6 +108,114 @@ If you don't want to use the /docs url, modify the url root in your urls.py, it 
 ## Use a customised definition of role instead of django groups
 
 coming soon...
+
+## Customing the look and feel of the docs pages
+
+Certainly! Here is the markdown-formatted text you can copy into a `.md` file:
+
+
+### Customizing the Look and Feel of MkDocs-Generated Pages
+
+You can customize the appearance of your MkDocs-generated documentation to better align with your project's branding and enhance user experience through your Django `settings.py` file. This approach allows you to define default and role-specific customizations without modifying the codebase.
+
+#### 1. Define Customization Settings in `settings.py`
+
+Add a new dictionary called `MKDOCS_CUSTOM_SETTINGS` to your `settings.py` file:
+
+```python
+# settings.py
+
+# MkDocs customization settings (optional)
+MKDOCS_CUSTOM_SETTINGS = {
+    'default': {
+        'theme': {
+            'name': 'material',
+            'palette': {
+                'primary': 'blue',
+                'accent': 'light blue'
+            },
+            'font': {
+                'text': 'Open Sans',
+                'code': 'Source Code Pro'
+            },
+            'icon': {
+                'logo': 'cloud',
+                'repo': 'github'
+            }
+        },
+        'extra_css': [
+            'overrides/extra.css'
+        ],
+        'extra_javascript': [
+            'overrides/extra.js'
+        ],
+        'plugins': [
+            'search',
+            'minify'
+        ]
+    },
+    'admin': {
+        'theme': {
+            'palette': {
+                'primary': 'red',
+                'accent': 'blue'
+            }
+        }
+    },
+    'user': {
+        'theme': {
+            'palette': {
+                'primary': 'green',
+                'accent': 'teal'
+            }
+        }
+    }
+}
+```
+
+- **Note**: The `'default'` key contains settings that apply to all roles unless overridden.
+- **Role-Specific Customizations**: Define customizations for specific roles (e.g., `'admin'`, `'user'`).
+
+#### 2. How It Works
+
+The `generate_mkdocs_yml.py` management command has been modified to read the `MKDOCS_CUSTOM_SETTINGS` from `settings.py` and apply them when generating the MkDocs configuration files for each role.
+
+- **Default Configuration**: If `MKDOCS_CUSTOM_SETTINGS` is not defined, default settings are used.
+- **Merging Settings**:
+  - Default settings under `'default'` are applied first.
+  - Role-specific settings override defaults where specified.
+
+#### 3. Modify `generate_mkdocs_yml.py`
+
+The management command uses a helper function `deep_update` to recursively merge dictionaries:
+
+```python
+def deep_update(self, original, update):
+    """
+    Recursively update a dictionary.
+    """
+    for key, value in update.items():
+        if isinstance(value, dict) and isinstance(original.get(key), dict):
+            self.deep_update(original[key], value)
+        else:
+            original[key] = value
+```
+
+This ensures that nested dictionaries in your settings are merged correctly.
+
+Now you can rebuild your docs to see your changes:
+
+      python manage.py generate_mkdocs_yml
+      python manage.py build_docs
+
+
+
+#### Additional Resources
+
+- **MkDocs Configuration Options**: [MkDocs Configuration](https://www.mkdocs.org/user-guide/configuration/)
+- **Material Theme Customization**: [Material Theme](https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/)
+- **MkDocs Plugins**: [MkDocs Plugins](https://github.com/mkdocs/mkdocs/wiki/MkDocs-Plugins)
+
 
 ## Contributing
 

@@ -10,9 +10,8 @@ class Command(BaseCommand):
     help = 'Generate mkdocs.yml files for each top-level subdirectory in the docs directory.'
 
     def handle(self, *args, **options):
-        print(settings.DOCSERVE_DOCS_ROOT)
         docs_root = getattr(settings, 'DOCSERVE_DOCS_ROOT', os.path.join(settings.BASE_DIR, 'docs'))
-        print(docs_root)
+
         if not os.path.exists(docs_root):
             raise CommandError(f"The docs directory '{docs_root}' does not exist.")
 
@@ -32,6 +31,7 @@ class Command(BaseCommand):
     def generate_mkdocs_yml(self, docs_dir, output_file, site_name, role):
         nav = []
 
+        # Build the navigation structure
         for root, dirs, files in os.walk(docs_dir):
             # Ignore hidden directories and files
             dirs[:] = [d for d in dirs if not d.startswith('.')]
@@ -72,19 +72,39 @@ class Command(BaseCommand):
                         # Top-level files
                         nav.append({page_name: rel_file.replace('\\', '/')})
 
-        # Create the mkdocs configuration
+        # Create the mkdocs configuration with default values
         config = {
             'site_name': site_name,
             'nav': nav,
             'theme': {
-                'name': 'material',
-
+                'name': 'material'
             },
             'use_directory_urls': True,
-            'docs_dir': role,  # Add this line to set the source directory
-            'site_url': f'{settings.SITE_URL}/docs/{role}/',
+            'docs_dir': role,
+            'site_url': f'{settings.SITE_URL}/docs/{role}/'
         }
+
+        # Get default settings
+        settings_dict = getattr(settings, 'MKDOCS_CUSTOM_SETTINGS', {})
+        default_settings = settings_dict.get('default', {})
+        # Get custom settings for the role
+        custom_settings = settings_dict.get(role, {})
+
+        # Merge default settings into config
+        self.deep_update(config, default_settings)
+        # Then merge role-specific settings
+        self.deep_update(config, custom_settings)
 
         # Write the configuration to the output file
         with open(output_file, 'w') as f:
             yaml.dump(config, f, sort_keys=False)
+
+    def deep_update(self, original, update):
+        """
+        Recursively update a dictionary.
+        """
+        for key, value in update.items():
+            if isinstance(value, dict) and isinstance(original.get(key), dict):
+                self.deep_update(original[key], value)
+            else:
+                original[key] = value
