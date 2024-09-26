@@ -20,7 +20,7 @@ def serve_docs(request, role, path=''):
     if not request.user.groups.filter(name=role).exists():
         return HttpResponseForbidden("You do not have access to this documentation.")
 
-    docs_root = os.path.join(settings.BASE_DIR, 'static', 'docs', role)
+    docs_root = os.path.join(settings.DOCSERVE_DOCS_SITE, role)
 
     if path == '':
         path = 'index.html'
