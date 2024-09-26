@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-docserve',
-    version='0.3.3',
+    version='0.3.4',
     packages=find_packages(),
     include_package_data=True,
     license='MIT License',
