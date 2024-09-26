@@ -11,7 +11,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         docs_root = getattr(settings, 'DOCSERVE_DOCS_ROOT', os.path.join(settings.BASE_DIR, 'docs'))
-        static_root = os.path.join(settings.BASE_DIR, 'static', 'docs')
+        static_root = getattr(settings, 'DOCSERVE_DOCS_SITE', os.path.join(settings.BASE_DIR, 'docs_site'))
+
+        # create static_root directory if it does not exist
+        if not os.path.exists(static_root):
+            os.makedirs(static_root)
 
         roles = [d for d in os.listdir(docs_root) if os.path.isdir(os.path.join(docs_root, d))]
 
@@ -21,7 +25,6 @@ class Command(BaseCommand):
 
         for role in roles:
             mkdocs_yml = os.path.join(docs_root, f'mkdocs_{role}.yml')
-            docs_dir = os.path.join(docs_root, role)
             output_dir = os.path.join(static_root, role)
 
             if not os.path.exists(mkdocs_yml):
@@ -30,11 +33,16 @@ class Command(BaseCommand):
 
             build_command = [
                 'mkdocs', 'build',
-                '-f', mkdocs_yml,
-                '-d', output_dir,
-                '-s', docs_dir
+                '--config-file', mkdocs_yml,
+                '--site-dir', output_dir
             ]
 
             self.stdout.write(f"Building documentation for role '{role}'...")
-            subprocess.run(build_command, check=True)
-            self.stdout.write(self.style.SUCCESS(f"Documentation for role '{role}' built successfully."))
+            result = subprocess.run(build_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if result.returncode != 0:
+                self.stderr.write(self.style.ERROR(f"Error building documentation for role '{role}':"))
+                self.stderr.write(result.stdout)
+                self.stderr.write(result.stderr)
+                raise CommandError(f"Failed to build documentation for role '{role}'.")
+            else:
+                self.stdout.write(self.style.SUCCESS(f"Documentation for role '{role}' built successfully."))

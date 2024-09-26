@@ -10,8 +10,9 @@ class Command(BaseCommand):
     help = 'Generate mkdocs.yml files for each top-level subdirectory in the docs directory.'
 
     def handle(self, *args, **options):
+        print(settings.DOCSERVE_DOCS_ROOT)
         docs_root = getattr(settings, 'DOCSERVE_DOCS_ROOT', os.path.join(settings.BASE_DIR, 'docs'))
-
+        print(docs_root)
         if not os.path.exists(docs_root):
             raise CommandError(f"The docs directory '{docs_root}' does not exist.")
 
@@ -25,10 +26,10 @@ class Command(BaseCommand):
             output_file = os.path.join(docs_root, f'mkdocs_{role}.yml')
             site_name = f"{role.capitalize()} Documentation"
 
-            self.generate_mkdocs_yml(docs_dir, output_file, site_name)
+            self.generate_mkdocs_yml(docs_dir, output_file, site_name, role)
             self.stdout.write(self.style.SUCCESS(f"Generated {output_file} for role '{role}'."))
 
-    def generate_mkdocs_yml(self, docs_dir, output_file, site_name):
+    def generate_mkdocs_yml(self, docs_dir, output_file, site_name, role):
         nav = []
 
         for root, dirs, files in os.walk(docs_dir):
@@ -76,9 +77,12 @@ class Command(BaseCommand):
             'site_name': site_name,
             'nav': nav,
             'theme': {
-                'name': 'material'
+                'name': 'material',
+
             },
-            'use_directory_urls': False
+            'use_directory_urls': True,
+            'docs_dir': role,  # Add this line to set the source directory
+            'site_url': f'{settings.SITE_URL}/docs/{role}/',
         }
 
         # Write the configuration to the output file

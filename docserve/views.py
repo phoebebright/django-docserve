@@ -7,11 +7,13 @@ from django.conf import settings
 import os
 import mimetypes
 
+
 @login_required
 def docs_home(request):
     # Get the list of roles the user has
     user_roles = request.user.groups.values_list('name', flat=True)
-    return render(request, 'docserve/docs_home.html', {'roles': user_roles})
+    return render(request, 'docs_home.html', {'roles': user_roles})
+
 
 @login_required
 def serve_docs(request, role, path='index.html'):
@@ -20,9 +22,11 @@ def serve_docs(request, role, path='index.html'):
         return HttpResponseForbidden("You do not have access to this documentation.")
 
     # Build the file path
-    file_path = os.path.join(
-        settings.BASE_DIR, 'docserve', 'static', 'docserve', 'docs', role, path
-    )
+    site_path = getattr(settings, 'DOCSERVE_DOCS_SITE', os.path.join(settings.BASE_DIR, 'docs_site'))
+    # file_path = os.path.join(
+    #     settings.BASE_DIR, 'docserve', 'static', 'docserve', 'docs', role, path
+    # )
+    file_path = os.path.join(site_path, role, path)
 
     # Check if the file exists
     if not os.path.exists(file_path):

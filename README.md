@@ -36,62 +36,62 @@ This simple library solves the following problems:
 
 In your project's settings.py, add docserve to the INSTALLED_APPS list:
 
-python
-Copy code
-INSTALLED_APPS = [
-    # ... other installed apps ...
-    'docserve',
-]
+    INSTALLED_APPS = [
+        # ... other installed apps ...
+        'docserve',
+    ]
+
+Point to the location of your source docs:
+
+    DOCSERVE_DOCS_ROOT = os.path.join(BASE_DIR, 'docs')
+
 Include URLs
 
 In your project's urls.py, include docserve URLs:
 
-python
-Copy code
-from django.urls import path, include
+    from django.urls import path, include
 
-urlpatterns = [
-    # ... other URL patterns ...
-    path('docs/', include('docserve.urls', namespace='docserve')),
-]
+    urlpatterns = [
+        # ... other URL patterns ...
+        path('docs/', include('docserve.urls', namespace='docserve')),
+    ]
+
 Configure Static Files
 
 Ensure your settings.py is configured to handle static files:
 
-python
-Copy code
-import os
-
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
-
-STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-]
-Collect Static Files
+    
+    import os
+    
+    STATIC_URL = '/static/'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, 'static'),
+    ]
+    
+    STATICFILES_FINDERS = [
+        'django.contrib.staticfiles.finders.FileSystemFinder',
+        'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    ]
+    Collect Static Files
 
 Run the following command to collect static files:
 
-bash
-Copy code
-python manage.py collectstatic
+
+    python manage.py collectstatic
+
 Create User Groups
 
 Ensure that the necessary user groups (roles) are created in your Django project. You can create groups via the Django admin interface or programmatically:
 
-python
-Copy code
-from django.contrib.auth.models import Group
 
-roles = ['admin', 'factory', 'distributor', 'support', 'user']
-for role in roles:
-    Group.objects.get_or_create(name=role)
-Assign Users to Groups
+    from django.contrib.auth.models import Group
+    
+    roles = ['admin', 'factory', 'distributor', 'support', 'user']
+    for role in roles:
+        Group.objects.get_or_create(name=role)
+    Assign Users to Groups
 
 Use the Django admin interface or scripts to assign users to the appropriate groups.
 
