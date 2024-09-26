@@ -16,23 +16,26 @@ def docs_home(request):
 
 
 @login_required
-def serve_docs(request, role, path='index.html'):
-    # Check if the user has the required role
+def serve_docs(request, role, path=''):
     if not request.user.groups.filter(name=role).exists():
         return HttpResponseForbidden("You do not have access to this documentation.")
 
-    # Build the file path
-    site_path = getattr(settings, 'DOCSERVE_DOCS_SITE', os.path.join(settings.BASE_DIR, 'docs_site'))
-    # file_path = os.path.join(
-    #     settings.BASE_DIR, 'docserve', 'static', 'docserve', 'docs', role, path
-    # )
-    file_path = os.path.join(site_path, role, path)
+    docs_root = os.path.join(settings.BASE_DIR, 'static', 'docs', role)
 
-    # Check if the file exists
+    if path == '':
+        path = 'index.html'
+    else:
+        file_path = os.path.join(docs_root, path)
+        if os.path.isdir(file_path):
+            path = os.path.join(path, 'index.html')
+        else:
+            path += '.html'
+
+    file_path = os.path.join(docs_root, path)
+
     if not os.path.exists(file_path):
         raise Http404("Page not found")
 
-    # Serve the file with correct MIME type
     with open(file_path, 'rb') as f:
         content = f.read()
     content_type, _ = mimetypes.guess_type(file_path)
