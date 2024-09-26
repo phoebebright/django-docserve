@@ -6,7 +6,7 @@
 
 This simple library solves the following problems:
 - serve docs appropriate to the user's role, and only those docs.
-- avoid having to create yml files for the docs I create, just assume all the docs in a role folder are to be included
+- avoid having to create yml files for the docs created, just assume all the docs in a role folder are to be included
 
 ## Features
 
@@ -43,7 +43,14 @@ In your project's settings.py, add docserve to the INSTALLED_APPS list:
 
 Point to the location of your source docs:
 
-    DOCSERVE_DOCS_ROOT = os.path.join(BASE_DIR, 'docs')
+    DOCSERVE_DOCS_ROOT = os.path.join(BASE_DIR, 'docs')  # source .md files
+    DOCSERVE_DOCS_SITE_ROOT = os.path.join(BASE_DIR, 'docs_site')  # where .html files will be put
+
+or
+
+    DOCSERVE_DOCS_ROOT = BASE_DIR / 'docs'    # source .md files
+    DOCSERVE_DOCS_SITE_ROOT = BASE_DIR / 'docs_site'   # where .html files will be put
+
 
 Include URLs
 
@@ -52,39 +59,16 @@ In your project's urls.py, include docserve URLs:
     from django.urls import path, include
 
     urlpatterns = [
-        # ... other URL patterns ...
-        path('docs/', include('docserve.urls', namespace='docserve')),
+         path('docs/', include(('docserve.urls', 'docserve'), namespace='docserve')),
+         ...
     ]
 
-Configure Static Files
 
-Ensure your settings.py is configured to handle static files:
+## Add User Roles and Docs
 
-    
-    import os
-    
-    STATIC_URL = '/static/'
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    
-    STATICFILES_DIRS = [
-        os.path.join(BASE_DIR, 'static'),
-    ]
-    
-    STATICFILES_FINDERS = [
-        'django.contrib.staticfiles.finders.FileSystemFinder',
-        'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    ]
-    Collect Static Files
+The whole purpose of this library is to be able to supply different docs to different types of user.  The users role or roles can be based on the django groups they have or you can customise how you define this role.
 
-Run the following command to collect static files:
-
-
-    python manage.py collectstatic
-
-Create User Groups
-
-Ensure that the necessary user groups (roles) are created in your Django project. You can create groups via the Django admin interface or programmatically:
-
+If you want to use django groups and you don't already have the groups setup you can do that in the admin interface or programmatically like this:
 
     from django.contrib.auth.models import Group
     
@@ -95,107 +79,38 @@ Ensure that the necessary user groups (roles) are created in your Django project
 
 Use the Django admin interface or scripts to assign users to the appropriate groups.
 
+## Add your docs directory, role directory and docs
 
-## Management Commands
+Create a docs directory wherever you specified in your setting DOCSERVE_DOCS_ROOT
 
-### Generating MkDocs Configuration Files
-
-Use the `generate_mkdocs_yml` command to generate `mkdocs.yml` files for each role:
-
-```bash
-python manage.py generate_mkdocs_yml
-
-This command creates MkDocs configuration files for each role based on the templates provided in the docserve app. You can customize these templates as needed.
+For each role, create a subdirectory and add your .md files to that directory
 
 
----
+## Build your Docs 
 
-### 6. Ensure MkDocs is Available
+Each time you change the .md files, you will need to rebuild your docs.  To do this run two management commands:
+          
+        python manage.py generate_mkdocs_yml
+        python manage.py build_docs
 
-Since the management commands call `mkdocs` via subprocess, ensure that `mkdocs` is installed in your environment.
+## Customisation
 
-Add `mkdocs` to your `requirements.txt`:
+### Templates
 
-```txt
-Django>=3.2,<5.0
-mkdocs>=1.4.2
-mkdocs-material>=9.1.15
-PyYAML>=5.4
+To modify the index page, look at the page in docserve/templates/home_page.html and put your customised version into your project's templates directory under a docserve directory.
 
+## URLs
 
-Usage
-Generate Documentation with MkDocs
+If you don't want to use the /docs url, modify the url root in your urls.py, it should just work!
 
-Build your documentation for each role using MkDocs:
+## Use a customised definition of role instead of django groups
 
-bash
-Copy code
-mkdocs build -v -f mkdocs_admin.yaml -d docserve/static/docserve/docs/admin/
-mkdocs build -v -f mkdocs_factory.yaml -d docserve/static/docserve/docs/factory/
-mkdocs build -v -f mkdocs_distributor.yaml -d docserve/static/docserve/docs/distributor/
-mkdocs build -v -f mkdocs_support.yaml -d docserve/static/docserve/docs/support/
-mkdocs build -v -f mkdocs_user.yaml -d docserve/static/docserve/docs/user/
-Access the Documentation
+coming soon...
 
-Documentation Home: Users can navigate to /docs/ to see a list of documentation available to them based on their roles.
-Direct Access: Users can access documentation for a specific role at /docs/<role>/.
-Role-Based Access Control
+## Contributing
 
-The app checks if a user is part of the group corresponding to the requested role before serving the documentation. If the user lacks the necessary role, they receive a 403 Forbidden response.
-
-Customization
-Templates
-
-You can customize the templates used by docserve by copying them into your project's template directory and modifying them as needed.
-
-Static Files
-
-If you need to serve additional static files or customize the styling, place your files in your project's static directory and ensure they do not conflict with docserve's static files.
-
-Middleware (Optional)
-If you prefer to centralize access control, you can implement custom middleware in your project to handle role checking.
-
-Deployment
-When deploying to production:
-
-Static Files Serving
-
-Ensure your web server (e.g., Nginx, Apache) is configured to serve static files from STATIC_ROOT.
-
-Security
-
-Use HTTPS to secure user data.
-Ensure that your web server does not serve the documentation files directly, bypassing Django's authentication and authorization checks.
-Example Nginx Configuration
-nginx
-Copy code
-server {
-    listen 80;
-    server_name yourdomain.com;
-
-    location /static/ {
-        alias /path/to/your/project/staticfiles/;
-    }
-
-    location /docs/ {
-        proxy_pass http://localhost:8000;
-        include proxy_params;
-        proxy_set_header Host $host;
-    }
-
-    location / {
-        proxy_pass http://localhost:8000;
-        include proxy_params;
-        proxy_set_header Host $host;
-    }
-}
-###mContributing
 Contributions are welcome! Please submit issues and pull requests for any features or bug fixes.
 
 ### License
 This project is licensed under the MIT License.
-
-### Contact
-For questions or support, please contact Your Name.
-
-Note: Replace yourdomain.com, /path/to/your/project/, and [Your Name](mailto:your.email@example.com) with your actual domain, project path, and contact information.
+=
