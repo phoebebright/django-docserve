@@ -1,5 +1,4 @@
 # docserve/views.py
-
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseForbidden, Http404
 from django.shortcuts import render
@@ -7,16 +6,34 @@ from django.conf import settings
 import os
 import mimetypes
 
+def default_role_check(role):
+    def check(user):
+        return user.groups.filter(name=role).exists()
+    return check
 
 @login_required
 def docs_home(request):
-    # Get the list of roles the user has
-    user_roles = request.user.groups.values_list('name', flat=True)
-    return render(request, 'docserve/docs_home.html', {'roles': user_roles})
+    role_definitions = getattr(settings, 'DOCSERVE_ROLE_DEFINITIONS', {})
+    roles = [d for d in os.listdir(os.path.join(settings.BASE_DIR, 'docs')) if os.path.isdir(os.path.join(settings.BASE_DIR, 'docs', d))]
+    available_roles = []
+
+    for role in roles:
+        role_check = role_definitions.get(role, default_role_check(role))
+        if role_check(request.user):
+            available_roles.append(role)
+
+    return render(request, 'docserve/docs_home.html', {'roles': available_roles})
 
 @login_required
 def serve_docs(request, role, path=''):
-    if not request.user.groups.filter(name=role).exists():
+    role_definitions = getattr(settings, 'DOCSERVE_ROLE_DEFINITIONS', {})
+    role_check = role_definitions.get(role)
+
+    if role_check is None:
+        # Use default group-based role check
+        role_check = default_role_check(role)
+
+    if not role_check(request.user):
         return HttpResponseForbidden("You do not have access to this documentation.")
 
     docs_root = os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role)

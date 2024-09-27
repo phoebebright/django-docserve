@@ -215,7 +215,283 @@ Now you can rebuild your docs to see your changes:
 - **MkDocs Configuration Options**: [MkDocs Configuration](https://www.mkdocs.org/user-guide/configuration/)
 - **Material Theme Customization**: [Material Theme](https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/)
 - **MkDocs Plugins**: [MkDocs Plugins](https://github.com/mkdocs/mkdocs/wiki/MkDocs-Plugins)
+Certainly! Let's modify the code and documentation to allow users to customize how each role is defined, rather than relying solely on Django groups. This will make your application more flexible and adaptable to different permission systems.
 
+---
+
+## Overview
+
+We'll introduce a new setting called `DOCSERVE_ROLE_DEFINITIONS` in `settings.py`. This setting will allow you to define how each role is determined for a user. You can specify role definitions using:
+
+1. **Django Groups (Default Behavior):** The role name corresponds to a Django group name.
+2. **Custom Functions:** Define a function that takes a `user` object and returns a boolean indicating whether the user has the role.
+3. **Lambdas or Callable Objects:** Use lambdas or any callable that fits your needs.
+
+We'll modify the `serve_docs` view and the `docs_home` view to use these customizable role definitions. We'll also update the documentation to reflect these changes.
+
+---
+
+## Step-by-Step Implementation
+
+### Step 1: Define Role Definitions in `settings.py`
+
+Add a new setting `DOCSERVE_ROLE_DEFINITIONS` to your `settings.py` file:
+
+```python
+# settings.py
+
+DOCSERVE_ROLE_DEFINITIONS = {
+    'admin': lambda user: user.is_superuser,
+    'user': lambda user: user.is_authenticated and not user.is_superuser,
+    # Add more roles as needed
+}
+
+# Optionally, you can define functions
+def is_manager(user):
+    return user.is_authenticated and user.groups.filter(name='manager').exists()
+
+DOCSERVE_ROLE_DEFINITIONS['manager'] = is_manager
+```
+
+**Explanation:**
+
+- The keys are role names (matching the documentation directories in `docs/`).
+- The values are callables (functions or lambdas) that take a `user` object and return `True` if the user has the role.
+
+### Step 2: Modify the `serve_docs` View
+
+Update the `serve_docs` view in `docserve/views.py` to use the customizable role definitions:
+
+```python
+# docserve/views.py
+
+import os
+import mimetypes
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, HttpResponseForbidden, Http404
+from django.conf import settings
+from django.shortcuts import redirect
+
+@login_required
+def serve_docs(request, role, path=''):
+    # Get the role definitions from settings
+    role_definitions = getattr(settings, 'DOCSERVE_ROLE_DEFINITIONS', {})
+    role_check = role_definitions.get(role)
+
+    if role_check is None:
+        return HttpResponseForbidden(f"Role '{role}' is not defined.")
+
+    if not role_check(request.user):
+        return HttpResponseForbidden("You do not have access to this documentation.")
+
+    # Existing code to serve documentation...
+    # [Include the updated serve_docs code from previous modifications]
+    # (Ensure to handle asset files correctly)
+```
+
+**Explanation:**
+
+- Retrieves `DOCSERVE_ROLE_DEFINITIONS` from `settings.py`.
+- Looks up the role check function for the given role.
+- If the role is not defined, returns a `403 Forbidden`.
+- Calls the role check function with `request.user`.
+- If the user does not have the role, returns a `403 Forbidden`.
+
+### Step 3: Modify the `docs_home` View
+
+Update the `docs_home` view to list only the documentation available to the user based on the custom role definitions:
+
+```python
+# docserve/views.py
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.conf import settings
+
+@login_required
+def docs_home(request):
+    role_definitions = getattr(settings, 'DOCSERVE_ROLE_DEFINITIONS', {})
+    available_roles = []
+
+    for role, role_check in role_definitions.items():
+        if role_check(request.user):
+            available_roles.append(role)
+
+    return render(request, 'docserve/docs_home.html', {'roles': available_roles})
+```
+
+**Explanation:**
+
+- Iterates over all roles defined in `DOCSERVE_ROLE_DEFINITIONS`.
+- Checks if the user has each role.
+- Collects the roles the user has into `available_roles`.
+- Passes `available_roles` to the template.
+
+### Step 4: Update Templates if Necessary
+
+Ensure that your `docs_home.html` template uses the `roles` context variable correctly:
+
+```html
+<!-- docserve/templates/docserve/docs_home.html -->
+
+<h1>Available Documentation</h1>
+<ul>
+    {% for role in roles %}
+        <li><a href="{% url 'docserve:serve_docs_index' role=role %}">{{ role|title }} Documentation</a></li>
+    {% endfor %}
+</ul>
+```
+
+### Step 5: Provide Default Behavior
+
+To maintain backward compatibility and provide default behavior, you can define default role checks that use Django groups when `DOCSERVE_ROLE_DEFINITIONS` is not specified:
+
+```python
+# docserve/views.py
+
+def default_role_check(role):
+    def check(user):
+        return user.groups.filter(name=role).exists()
+    return check
+```
+
+Then modify the `serve_docs` view:
+
+```python
+@login_required
+def serve_docs(request, role, path=''):
+    role_definitions = getattr(settings, 'DOCSERVE_ROLE_DEFINITIONS', {})
+    role_check = role_definitions.get(role)
+
+    if role_check is None:
+        # Use default group-based role check
+        role_check = default_role_check(role)
+
+    if not role_check(request.user):
+        return HttpResponseForbidden("You do not have access to this documentation.")
+
+    # ... rest of the code ...
+```
+
+And similarly in `docs_home`:
+
+```python
+@login_required
+def docs_home(request):
+    role_definitions = getattr(settings, 'DOCSERVE_ROLE_DEFINITIONS', {})
+    roles = [d for d in os.listdir(os.path.join(settings.BASE_DIR, 'docs')) if os.path.isdir(os.path.join(settings.BASE_DIR, 'docs', d))]
+    available_roles = []
+
+    for role in roles:
+        role_check = role_definitions.get(role, default_role_check(role))
+        if role_check(request.user):
+            available_roles.append(role)
+
+    return render(request, 'docserve/docs_home.html', {'roles': available_roles})
+```
+
+**Explanation:**
+
+- If a role is not defined in `DOCSERVE_ROLE_DEFINITIONS`, the default behavior checks if the user belongs to a Django group with the same name as the role.
+- This ensures existing setups continue to work without changes.
+
+### Step 6: Update Documentation
+
+Update your `README.md` or relevant documentation to explain how to customize role definitions.
+
+---
+
+## Updated Documentation Section
+
+```markdown
+### Customizing Role Definitions
+
+By default, the `docserve` app determines user roles based on Django groups with the same name as the roles. However, you can customize how each role is defined by specifying role checks in your `settings.py` file.
+
+#### Defining Custom Role Checks
+
+Add a new setting `DOCSERVE_ROLE_DEFINITIONS` to your `settings.py`:
+
+```python
+# settings.py
+
+DOCSERVE_ROLE_DEFINITIONS = {
+    'admin': lambda user: user.is_superuser,
+    'user': lambda user: user.is_authenticated and not user.is_superuser,
+    'manager': lambda user: user.is_authenticated and user.groups.filter(name='manager').exists(),
+    # Add more roles as needed
+}
+```
+
+- **Keys**: Role names corresponding to the documentation directories in `docs/`.
+- **Values**: Callables (functions or lambdas) that accept a `user` object and return `True` if the user has the role.
+
+#### Examples
+
+- **Using Lambdas**:
+
+  ```python
+  DOCSERVE_ROLE_DEFINITIONS = {
+      'admin': lambda user: user.is_staff,
+      'user': lambda user: user.is_authenticated,
+  }
+  ```
+
+- **Using Functions**:
+
+  ```python
+  def is_premium_user(user):
+      return user.is_authenticated and user.profile.is_premium
+
+  DOCSERVE_ROLE_DEFINITIONS = {
+      'premium': is_premium_user,
+  }
+  ```
+
+#### Default Behavior
+
+If `DOCSERVE_ROLE_DEFINITIONS` is not defined or a role is not specified, the app defaults to checking if the user belongs to a Django group with the same name as the role.
+
+#### Updating Views
+
+The `serve_docs` and `docs_home` views have been updated to use the custom role definitions. If a role is not defined in `DOCSERVE_ROLE_DEFINITIONS`, it falls back to the default group-based check.
+
+#### Access Control Flow
+
+1. **User Requests Documentation**: When a user requests documentation for a specific role.
+2. **Role Check**: The app looks up the role in `DOCSERVE_ROLE_DEFINITIONS` and calls the associated function with `request.user`.
+3. **Access Granted or Denied**:
+   - **Granted**: If the function returns `True`, the user is allowed to access the documentation.
+   - **Denied**: If the function returns `False`, the user receives a `403 Forbidden` response.
+
+#### Example Use Cases
+
+- **Role Based on User Attributes**:
+
+  ```python
+  DOCSERVE_ROLE_DEFINITIONS = {
+      'beta_tester': lambda user: user.is_authenticated and user.profile.is_beta_tester,
+  }
+  ```
+
+- **Complex Logic**:
+
+  ```python
+  def has_access(user):
+      if not user.is_authenticated:
+          return False
+      # Custom logic
+      return user.email.endswith('@example.com') and user.is_active
+
+  DOCSERVE_ROLE_DEFINITIONS = {
+      'special_access': has_access,
+  }
+  ```
+
+#### Important Notes
+
+- **Permissions are Evaluated at Runtime**: The role check functions are called each time a user requests documentation, ensuring up-to-date access control.
+- **Security**: Ensure that your role check functions are secure and correctly implement your access control logic.
 
 ## Contributing
 
