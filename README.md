@@ -175,6 +175,8 @@ MKDOCS_CUSTOM_SETTINGS = {
 
 - **Note**: The `'default'` key contains settings that apply to all roles unless overridden.
 - **Role-Specific Customizations**: Define customizations for specific roles (e.g., `'admin'`, `'user'`).
+- **It is up to you to install any plugins you use** - the minify plugin is not installed by default, eg. pip install mkdocs-minify-plugin
+
 
 #### 2. How It Works
 
