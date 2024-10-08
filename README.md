@@ -288,6 +288,76 @@ Ensure that your `docs_home.html` template uses the `roles` context variable cor
 </ul>
 ```
 
+### Step 5: Use the Mixin to link docs to views
+
+If you want to link your views to pages in the docs, add the `DocserveMixin` to your view and use in a similar way to defining templates.
+
+
+#### 1. Import the Mixin
+
+Import the `DocServeMixin` into your view module.
+
+```python
+from docserve.mixins import DocServeMixin
+```
+
+#### 2. Inherit from the Mixin
+
+Include `DocServeMixin` in your view's inheritance list before the Django view class.
+
+```python
+from django.views.generic import CreateView
+from docserve.mixins import DocServeMixin
+from .models import Entry
+
+class AddEntryView(DocServeMixin, CreateView):
+    model = Entry
+    template_name = 'entries/add_entry.html'
+    docserve_page = 'guide/add_entry/'
+```
+
+#### 3. Specify the Documentation Page
+
+You can specify the documentation page in two ways:
+
+- **By setting the `docserve_page` attribute**: Provide the relative path to the documentation page.
+
+  ```python
+  docserve_page = 'guide/add_entry/'
+  ```
+
+- **By overriding the `get_docserve_page` method**: For dynamic determination of the documentation page.
+
+  ```python
+  def get_docserve_page(self):
+      # Custom logic to determine the documentation page
+      return 'guide/custom_page/'
+  ```
+
+#### 4. Accessing the Documentation URL in Templates
+
+The mixin adds a `docserve_url` variable to the view's context. Use this variable in your templates to create links to the documentation.
+
+```html
+<!-- templates/entries/add_entry.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Add Entry</h1>
+
+<!-- Your form goes here -->
+
+{% if docserve_url %}
+    <p>
+        Need help? See the
+        <a href="{{ docserve_url }}" target="docs_tab">documentation</a>.
+    </p>
+{% endif %}
+
+{% endblock %}
+```
+
 
 #### Important Notes
 
