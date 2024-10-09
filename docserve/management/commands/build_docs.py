@@ -12,12 +12,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         docs_root = getattr(settings, 'DOCSERVE_DOCS_ROOT', os.path.join(settings.BASE_DIR, 'docs'))
         output_root = getattr(settings, 'DOCSERVE_DOCS_SITE_ROOT', os.path.join(settings.BASE_DIR, 'docs_site'))
+        overrides = getattr(settings, 'DOCSERVE_OVERRIDE_DIRS', ['overrides'])
 
         # create output_root directory if it does not exist
         if not os.path.exists(output_root):
             os.makedirs(output_root)
 
-        roles = [d for d in os.listdir(docs_root) if os.path.isdir(os.path.join(docs_root, d))]
+        roles = [d for d in os.listdir(docs_root) if os.path.isdir(os.path.join(docs_root, d)) and not d in overrides]
 
         if not roles:
             self.stdout.write(self.style.WARNING("No documentation to build."))

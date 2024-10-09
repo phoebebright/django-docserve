@@ -168,7 +168,14 @@ MKDOCS_CUSTOM_SETTINGS = {
 ```
 **It is up to you to install any plugins you use** - the minify plugin is not installed by default, eg. pip install mkdocs-minify-plugin
 
+**Referring to overrides**, eg. extra_css
+
+        'extra_css': ['overrides/extra.css',]   # in a directory within role directory - must be in all roles
+        'extra_css': ['../overrides/extra.css',]   # in a directory overrides at the role level
+        'extra_css': ['/static/css/extra.css',]   # in the main structure of the site, outside the docs directory
+   
 ### Overrides
+
 
 #### 1 Create an overrides directory
 
@@ -248,6 +255,13 @@ Place the custom `header.html` template in `docs/overrides/partials/`.
 </nav>
 {% endblock %}
 ```
+
+## Rebuild Docs
+
+After changes to settings, run python manage.py generate_mkdocs_yml
+to rebuild the .yaml files that define each set of role docs.  This will override any customisation you have done.
+
+Then run python manage.py build_docs to rebuild the html files.
 
 #### Additional Resources related to MkDocs
 
