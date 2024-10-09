@@ -11,11 +11,12 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         docs_root = getattr(settings, 'DOCSERVE_DOCS_ROOT', os.path.join(settings.BASE_DIR, 'docs'))
+        overrides = getattr(settings, 'DOCSERVE_OVERRIDE_DIRS', ['overrides'])
 
         if not os.path.exists(docs_root):
             raise CommandError(f"The docs directory '{docs_root}' does not exist.")
 
-        roles = [d for d in os.listdir(docs_root) if os.path.isdir(os.path.join(docs_root, d))]
+        roles = [d for d in os.listdir(docs_root) if os.path.isdir(os.path.join(docs_root, d)) and not d in overrides]
         if not roles:
             self.stdout.write(self.style.WARNING("No subdirectories found in the docs directory."))
             return
