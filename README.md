@@ -45,6 +45,7 @@ Point to the location of your source docs:
 
     DOCSERVE_DOCS_ROOT = os.path.join(BASE_DIR, 'docs')  # source .md files
     DOCSERVE_DOCS_SITE_ROOT = os.path.join(BASE_DIR, 'docs_site')  # where .html files will be put
+    
 
 or
 
@@ -137,10 +138,10 @@ MKDOCS_CUSTOM_SETTINGS = {
             }
         },
         'extra_css': [
-            'overrides/extra.css'
+            '../overrides/extra.css'
         ],
         'extra_javascript': [
-            'overrides/extra.js'
+            '../overrides/extra.js'
         ],
         'plugins': [
             'search',
@@ -167,11 +168,7 @@ MKDOCS_CUSTOM_SETTINGS = {
 ```
 **It is up to you to install any plugins you use** - the minify plugin is not installed by default, eg. pip install mkdocs-minify-plugin
 
-
-#### 2. Customising the HTML Template
-
-
-### Customising Templates
+### Overrides
 
 #### 1 Create an overrides directory
 
@@ -183,6 +180,27 @@ Create a common `overrides` directory in your `docs` root directory to store sha
 project_root/
 ├── docs/
 │   ├── overrides/
+│   │   ├── extra.js
+│   │   └── partials/
+│   │       └── header.html
+│   ├── admin/
+│   │   ├── index.md
+│   ├── organiser/
+│   │   ├── index.md
+│   └── manager/
+        ├── index.md
+```
+
+There is a setting to allow directories at the role level to NOT be handled as a role.  By default this is just 'overrides' but can be extended in settings.py
+
+    DOCSERVE_OVERRIDE_DIRS = ['custom_css','custom_js']
+
+```
+project_root/
+├── docs/
+│   ├── custom_css/
+│   │   ├── extra.css
+│   ├── custom_js/
 │   │   ├── extra.js
 │   │   └── partials/
 │   │       └── header.html
@@ -333,8 +351,25 @@ You can specify the documentation page in two ways:
       # Custom logic to determine the documentation page
       return 'guide/custom_page/'
   ```
+#### 4. Define the url to convert your docserve page to a url
 
-#### 4. Accessing the Documentation URL in Templates
+If you have added the default url pattern 
+    
+    path('docs/', include(('docserve.urls', 'docserve'), namespace='docserve')),
+
+Then you do not need to modify this function.  But if you have, the simplest solution is to subclass DocServeMixin like this:
+
+```python
+from docserve.mixins import DocServeMixin
+
+class MyDocServeMixin(DocServeMixin):
+    
+    def get_docserve_url(self):
+        return f'/my_docs/{self.docserve_page}'
+```
+
+
+#### 5. Accessing the Documentation URL in Templates
 
 The mixin adds a `docserve_url` variable to the view's context. Use this variable in your templates to create links to the documentation.
 

@@ -1,4 +1,5 @@
 # docserve/mixins.py
+from django.conf import settings
 
 class DocServeMixin:
     docserve_page = None  # Specify the documentation page path or name
@@ -21,24 +22,11 @@ class DocServeMixin:
     def get_docserve_url(self, page):
         """
         Constructs the URL to the documentation page.
+        This requires the SITE_URL setting to be set and the value used in including your docs url.
+        eg.     path('docs/', include(('docserve.urls', 'docserve'), namespace='docserve')),
+        add 'docs' to your url
         """
-        # Determine the user's role (you can customize this method)
-        role = self.get_user_role()
-        # Build the URL to the documentation page
-        url = f"/docs/{role}/{page}"
-        return url
+        if not page.startswith('/'):
+            page = '/' + page
 
-    def get_user_role(self):
-        """
-        Determines the user's role.
-        Override this method if necessary.
-        """
-        # Example implementation based on user groups
-        if self.request.user.groups.filter(name='admin').exists():
-            return 'admin'
-        elif self.request.user.groups.filter(name='manager').exists():
-            return 'manager'
-        elif self.request.user.groups.filter(name='organiser').exists():
-            return 'organiser'
-        else:
-            return 'competitor'
+        return settings.SITE_URL + '/docs' + page

@@ -26,15 +26,22 @@ def docs_home(request):
 
 @login_required
 def serve_docs(request, role, path=''):
-    role_definitions = getattr(settings, 'DOCSERVE_ROLE_DEFINITIONS', {})
-    role_check = role_definitions.get(role)
+    '''serve the documentation and associated files'''
 
-    if role_check is None:
-        # Use default group-based role check
-        role_check = default_role_check(role)
+    # allow a directories to bypass role checks, eg. have an overrides directory for custom css and js
+    overrides = getattr(settings, 'DOCSERVE_OVERRIDE_DIRS', ['overrides'])
+    if not role in overrides:
 
-    if not role_check(request.user):
-        return HttpResponseForbidden("You do not have access to this documentation.")
+        # check this user has the role required by the first part of the path, eg. docs/role/getting-started/first/page.html
+        role_definitions = getattr(settings, 'DOCSERVE_ROLE_DEFINITIONS', {})
+        role_check = role_definitions.get(role)
+
+        if role_check is None:
+            # Use default group-based role check
+            role_check = default_role_check(role)
+
+        if not role_check(request.user):
+            return HttpResponseForbidden("You do not have access to this documentation.")
 
     docs_root = os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role)
 
