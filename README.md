@@ -84,7 +84,9 @@ Use the Django admin interface or scripts to assign users to the appropriate gro
 
 Create a docs directory wherever you specified in your setting DOCSERVE_DOCS_ROOT
 
-For each role, create a subdirectory and add your .md files to that directory
+For each role, create a subdirectory and add your .md files to that directory.  See [Tips for Structuring your Role Based Docs](#tips-for-structuring-your-role-based-docs) for more information.
+
+
 
 
 ## Build your Docs 
@@ -348,6 +350,10 @@ class AddEntryView(DocServeMixin, CreateView):
     docserve_page = 'guide/add_entry/'
 ```
 
+You can include a tag in the page:
+
+    docserve_page = "organiser/judges/judge_pool/#adding-a-judge-to-the-pool"
+ 
 #### 3. Specify the Documentation Page
 
 You can specify the documentation page in two ways:
@@ -442,6 +448,43 @@ MKDOCS_CUSTOM_SETTINGS = {
     # You can still define role-specific settings if needed
 }
 ```
+## Setting up menu in your template
+
+This is a manual process as you probably want to include conditions on displaying the link.  For example, here is part of a bootstrap nav menu:
+
+
+     <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="docs_menu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Help
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="docs_menu">
+            {% if user.is_administrator %}
+                <li><a class="dropdown-item" href="/docs/admin/" target="docs_tab">Administrator Docs</a></li>
+                <li><a class="dropdown-item" href="/docs/manager/" target="docs_tab">Manager Docs</a></li>
+                <li><a class="dropdown-item" href="/docs/organiser/" target="docs_tab">Organiser Docs</a></li>
+                <li><a class="dropdown-item" href="/docs/competitor/" target="docs_tab">Competitor Docs</a></li>
+                <li><a class="dropdown-item" href="/docs/scorer/" target="docs_tab">Scorer Docs</a></li>
+            {% elif user.is_manager %}
+                <li><a class="dropdown-item" href="/docs/manager/" target="docs_tab">Manager Docs</a></li>
+                <li><a class="dropdown-item" href="/docs/organiser/" target="docs_tab">Organiser Docs</a></li>
+                <li><a class="dropdown-item" href="/docs/competitor/" target="docs_tab">Competitor Docs</a></li>
+                <li><a class="dropdown-item" href="/docs/scorer/" target="docs_tab">Scorer Docs</a></li>
+
+             ....
+
+            {% else %}
+                <li><a class="dropdown-item" href="/docs/competitor/" target="docs_tab">Competitor Docs</a></li>
+            {% endif %}
+        </ul>
+        
+        
+## Tips for Structuring your Role Based Docs
+
+It's worth deciding on a standard structure for your docs and working with the way docserve generates your yaml files to make life as easy as possible.
+
+I like to have an index.md for each role and then a list of topics that are directories. 
+
+![img.png](img.png)
 
 ## Contributing
 
