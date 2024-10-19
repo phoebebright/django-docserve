@@ -1,6 +1,4 @@
 Django>=3.2
-mkdocs>=1.4.2
 mkdocs-material>=9.1.15
-markdown>=3.4
-setuptools>=65.5.1
+setuptools
 pyyaml
