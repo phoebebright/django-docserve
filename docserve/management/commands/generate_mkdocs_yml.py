@@ -78,7 +78,8 @@ class Command(BaseCommand):
             'site_name': site_name,
             'nav': nav,
             'theme': {
-                'name': 'material'
+                'name': 'material',
+                'custom_dir': 'overrides',
             },
             'use_directory_urls': True,
             'docs_dir': role,
