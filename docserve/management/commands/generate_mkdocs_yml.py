@@ -12,6 +12,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         docs_root = getattr(settings, 'DOCSERVE_DOCS_ROOT', os.path.join(settings.BASE_DIR, 'docs'))
         overrides = getattr(settings, 'DOCSERVE_OVERRIDE_DIRS', ['overrides'])
+        site_name_prefix = getattr(settings, 'DOCSERVE_SITE_NAME_PREFIX', '')
 
         if not os.path.exists(docs_root):
             raise CommandError(f"The docs directory '{docs_root}' does not exist.")
@@ -38,9 +39,13 @@ class Command(BaseCommand):
             dirs[:] = [d for d in dirs if not d.startswith('.')]
             files = [f for f in files if not f.startswith('.')]
 
-            # Sort directories and files
-            dirs.sort()
-            files.sort()
+            # Sort directories and files case-insensitively
+            dirs.sort(key=lambda d: d.lower())
+            files.sort(key=lambda f: f.lower())
+
+            # Ensure 'index.md' is at the top of the files list
+            if 'index.md' in files:
+                files.insert(0, files.pop(files.index('index.md')))
 
             for file in files:
                 if file.endswith('.md'):

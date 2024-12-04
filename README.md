@@ -102,7 +102,25 @@ Each time you change the .md files, you will need to rebuild your docs.  To do t
 
 To modify the index page, look at the page in docserve/templates/home_page.html and put your customised version into your project's templates directory under a docserve directory.
 
-To customise the doc pages 
+To modify the header name:
+
+You can override the header.html template for example:
+
+1. get the current header template from https://github.com/squidfunk/mkdocs-material/blob/master/material/templates/partials/header.html
+2. Modify as required
+3. Put in the /docs/overrides/partials directory still named header.html
+
+If you just want to modify the name in the header you can add your prefix as a setting, note trailing space:
+
+    DOCSERVE_SITE_NAME_PREFIX = 'My Application '
+
+Header now appears as My Application User Documentation instead of User Documentation.  
+
+More complex changes should be done by using the overrides method above.
+
+
+
+
 
 ### URLs
 
