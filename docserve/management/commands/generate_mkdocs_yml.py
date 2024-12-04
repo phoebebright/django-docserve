@@ -25,7 +25,7 @@ class Command(BaseCommand):
         for role in roles:
             docs_dir = os.path.join(docs_root, role)
             output_file = os.path.join(docs_root, f'mkdocs_{role}.yml')
-            site_name = f"{role.capitalize()} Documentation"
+            site_name = f"{site_name_prefix}{role.capitalize()} Documentation"
 
             self.generate_mkdocs_yml(docs_dir, output_file, site_name, role)
             self.stdout.write(self.style.SUCCESS(f"Generated {output_file} for role '{role}'."))
