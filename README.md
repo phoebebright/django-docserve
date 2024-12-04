@@ -148,7 +148,8 @@ MKDOCS_CUSTOM_SETTINGS = {
         'plugins': [
             'search',
             'minify'
-        ]
+        ],
+        'markdown_extensions': ['attr_list', 'admonition','pymdownx.details','pymdownx.superfences','md_in_html','pymdownx.tasklist']
     },
     'admin': {
         'theme': {
@@ -211,6 +212,7 @@ project_root/
 │   │   ├── extra.css
 │   ├── custom_js/
 │   │   ├── extra.js
+│   ├── overrides/
 │   │   └── partials/
 │   │       └── header.html
 │   ├── admin/
