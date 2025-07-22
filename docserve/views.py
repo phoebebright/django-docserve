@@ -36,7 +36,7 @@ def serve_docs(request, role, path=''):
         role_definitions = getattr(settings, 'DOCSERVE_ROLE_DEFINITIONS', {})
         role_default = getattr(settings, 'DOCSERVE_ROLE_DEFAULT', None)
         if not role in role_definitions:
-            logger.error(f"Role '{role}' not defined in DOCSERVE_ROLE_DEFINITIONS. Using default role {DOCSERVE_ROLE_DEFAULT}.")
+            logger.error(f"Role '{role}' not defined in DOCSERVE_ROLE_DEFINITIONS. Using default role {role_default}.")
 
         role_check = role_definitions.get(role,role_default)
 
