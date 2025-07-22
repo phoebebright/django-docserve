@@ -36,9 +36,13 @@ def serve_docs(request, role, path=''):
         role_definitions = getattr(settings, 'DOCSERVE_ROLE_DEFINITIONS', {})
         role_default = getattr(settings, 'DOCSERVE_ROLE_DEFAULT', None)
         if not role in role_definitions:
-            logger.error(f"Role '{role}' not defined in DOCSERVE_ROLE_DEFINITIONS. Using default role {role_default}.")
+            if role_default:
+                logger.error(f"Role '{role}' not defined in DOCSERVE_ROLE_DEFINITIONS. Using default role {role_default}.")
+                role = role_default
+            else:
+                return HttpResponseForbidden(f"Your role {role} has not been defined so we cannot give you access.")
 
-        role_check = role_definitions.get(role,role_default)
+        role_check = role_definitions.get(role)
 
         if not role_check(request.user):
             return HttpResponseForbidden("You do not have access to this documentation.")
