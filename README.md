@@ -307,7 +307,7 @@ We'll modify the `serve_docs` view and the `docs_home` view to use these customi
 
 ### Step 1: Define Role Definitions in `settings.py`
 
-Add a new setting `DOCSERVE_ROLE_DEFINITIONS` to your `settings.py` file:
+Add a new setting `DOCSERVE_ROLE_DEFINITIONS` to your `settings.py` file, and optionally a default:
 
 ```python
 # settings.py
@@ -315,8 +315,10 @@ Add a new setting `DOCSERVE_ROLE_DEFINITIONS` to your `settings.py` file:
 DOCSERVE_ROLE_DEFINITIONS = {
     'admin': lambda user: user.is_superuser,
     'user': lambda user: user.is_authenticated and not user.is_superuser,
+    'public': lambda user: True,
     'manager': is_manager,
 }
+DOCSERVE_ROLE_DEFAULT = 'user'
 
 # Optionally, you can define functions
 def is_manager(user):
@@ -328,6 +330,10 @@ DOCSERVE_ROLE_DEFINITIONS['manager'] = is_manager
 
 
 ### Step 4: Update Templates if Necessary
+
+Create a docserve directory in your templates folder and add docs_home.html that will be the landing page for documentation.  If you don't do this, docserve will provide a default page.  Note that this page should use the styles/templates of your site not the docserver ones.
+
+```html
 
 Ensure that your `docs_home.html` template uses the `roles` context variable correctly:
 

@@ -6,19 +6,19 @@ from django.conf import settings
 import os
 import mimetypes
 
-def default_role_check(role):
-    def check(user):
-        return user.groups.filter(name=role).exists()
-    return check
+import logging
+logger = logging.getLogger(__name__)
+
 
 @login_required
 def docs_home(request):
     role_definitions = getattr(settings, 'DOCSERVE_ROLE_DEFINITIONS', {})
+    role_default = getattr(settings, 'DOCSERVE_ROLE_DEFAULT', None)
     roles = [d for d in os.listdir(os.path.join(settings.BASE_DIR, 'docs')) if os.path.isdir(os.path.join(settings.BASE_DIR, 'docs', d))]
     available_roles = []
 
     for role in roles:
-        role_check = role_definitions.get(role, default_role_check(role))
+        role_check = role_definitions.get(role, role_default)
         if role_check(request.user):
             available_roles.append(role)
 
@@ -34,11 +34,11 @@ def serve_docs(request, role, path=''):
 
         # check this user has the role required by the first part of the path, eg. docs/role/getting-started/first/page.html
         role_definitions = getattr(settings, 'DOCSERVE_ROLE_DEFINITIONS', {})
-        role_check = role_definitions.get(role)
+        role_default = getattr(settings, 'DOCSERVE_ROLE_DEFAULT', None)
+        if not role in role_definitions:
+            logger.error(f"Role '{role}' not defined in DOCSERVE_ROLE_DEFINITIONS. Using default role {DOCSERVE_ROLE_DEFAULT}.")
 
-        if role_check is None:
-            # Use default group-based role check
-            role_check = default_role_check(role)
+        role_check = role_definitions.get(role,role_default)
 
         if not role_check(request.user):
             return HttpResponseForbidden("You do not have access to this documentation.")

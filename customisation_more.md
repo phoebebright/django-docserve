@@ -1,8 +1,4 @@
-Full docs from chatgpt on customisation:
 
-Certainly! Here is the updated markdown documentation for this feature, which you can copy into your `README.md` file:
-
-```markdown
 ### Customizing MkDocs Configuration via Django Settings
 
 You can customize the appearance and functionality of your MkDocs-generated documentation directly through your Django `settings.py` file. This approach allows you to define default and role-specific customizations without modifying the codebase.
@@ -167,16 +163,38 @@ You can customize various aspects of MkDocs:
 #### 8. Defaults and Optional Settings
 
 - **Defaults**: If `MKDOCS_CUSTOM_SETTINGS` is not defined in `settings.py`, the default MkDocs settings are used.
-- **Optional**: All customization settings are optional. You can specify as much or as little as you need.
+- **Optional**: All customization settings are optional. You can specify as much or as little as you need
+
+## Another Level - including settings in the templates
+NOT IMPLEMENTED - only works if using docserve mixin to render page - ie. have a page linked to a view.  Need to use a plugin to impmenent properly
+
+Add the variables you want in an extra_context key eg.
+
+```python
+MKDOCS_CUSTOM_SETTINGS = {
+    'default': {
+  
+      ...
+    },
+       'extra_context': {
+        'contact_link': 'https://di.skor.ie/hi/',
+        'EVENT_NAME' : 'Course',
+        'EVENT_NAME_PLURAL': 'Courses',
+    }
+}
+```
+
+Then in the templates you can access these variables:
+
+```html
+If you do not hear back from us with 7 days, please use the contact form to give us a nudge.  [Contact Form]({{contact_link}}) 
+
+```
+
+```
 
 #### 9. Additional Resources
 
 - **MkDocs Configuration Options**: [MkDocs Configuration](https://www.mkdocs.org/user-guide/configuration/)
 - **Material Theme Customization**: [Material Theme](https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/)
 - **MkDocs Plugins**: [MkDocs Plugins](https://github.com/mkdocs/mkdocs/wiki/MkDocs-Plugins)
-
----
-
-By following these steps, you can easily customize the look and feel of your MkDocs-generated documentation directly from your Django `settings.py` file, with the flexibility to provide default and role-specific configurations.
-
-```

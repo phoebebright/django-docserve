@@ -17,6 +17,10 @@ class DocServeMixin:
         if docserve_page:
             # Construct the documentation URL
             context['docserve_url'] = self.get_docserve_url(docserve_page)
+
+        if 'extra_context' in settings.MKDOCS_CUSTOM_SETTINGS:
+            # Add any extra context from settings
+            context.update(settings.MKDOCS_CUSTOM_SETTINGS['extra_context'])
         return context
 
     def get_docserve_url(self, page):
