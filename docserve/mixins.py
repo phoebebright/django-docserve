@@ -33,4 +33,9 @@ class DocServeMixin:
         if not page.startswith('/'):
             page = '/' + page
 
-        return settings.DOCSERVE_SITE_URL + '/docs' + page
+        if settings.hasattr(settings, 'DOCSERVE_SITE_URL'):
+            domain = settings.DOCSERVE_SITE_URL
+        else:
+            domain = settings.SITE_URL
+
+        return f"{domain}/docs/{page}"
