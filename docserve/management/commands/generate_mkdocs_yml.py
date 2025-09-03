@@ -13,10 +13,7 @@ class Command(BaseCommand):
         docs_root = getattr(settings, 'DOCSERVE_DOCS_ROOT', os.path.join(settings.BASE_DIR, 'docs'))
         overrides = getattr(settings, 'DOCSERVE_OVERRIDE_DIRS', ['overrides'])
         site_name_prefix = getattr(settings, 'DOCSERVE_SITE_NAME_PREFIX', '')
-        if settings.hasattr(settings, 'DOCSERVE_SITE_URL'):
-            domain = settings.DOCSERVE_SITE_URL
-        else:
-            domain = settings.SITE_URL
+        domain = getattr(settings, "DOCSERVE_SITE_URL", settings.SITE_URL)
 
         if not os.path.exists(docs_root):
             raise CommandError(f"The docs directory '{docs_root}' does not exist.")
