@@ -26,11 +26,11 @@ class DocServeMixin:
     def get_docserve_url(self, page):
         """
         Constructs the URL to the documentation page.
-        This requires the SITE_URL setting to be set and the value used in including your docs url.
+        This requires the DOCSERVE_SITE_URL setting to be set and the value used in including your docs url.
         eg.     path('docs/', include(('docserve.urls', 'docserve'), namespace='docserve')),
         add 'docs' to your url
         """
         if not page.startswith('/'):
             page = '/' + page
 
-        return settings.SITE_URL + '/docs' + page
+        return settings.DOCSERVE_SITE_URL + '/docs' + page

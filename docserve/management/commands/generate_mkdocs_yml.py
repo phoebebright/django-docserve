@@ -88,7 +88,7 @@ class Command(BaseCommand):
             },
             'use_directory_urls': True,
             'docs_dir': role,
-            'site_url': f'{settings.SITE_URL}/docs/{role}/'
+            'site_url': f'{settings.DOCSERVE_SITE_URL}/docs/{role}/'
         }
 
         # Get default settings
