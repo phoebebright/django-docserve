@@ -14,8 +14,15 @@ logger = logging.getLogger(__name__)
 def docs_home(request):
     role_definitions = getattr(settings, 'DOCSERVE_ROLE_DEFINITIONS', {})
     role_default = getattr(settings, 'DOCSERVE_ROLE_DEFAULT', None)
-    roles = [d for d in os.listdir(os.path.join(settings.BASE_DIR, 'docs')) if os.path.isdir(os.path.join(settings.BASE_DIR, 'docs', d))]
     available_roles = []
+
+    # used to hold static data like css that will be used to override other data - a bit confusing to have it here
+    ignore = {"overrides"}
+
+    roles = [
+        d for d in os.listdir(os.path.join(settings.BASE_DIR, 'docs'))
+        if os.path.isdir(os.path.join(settings.BASE_DIR, 'docs', d)) and d not in ignore
+    ]
 
     for role in roles:
         role_check = role_definitions.get(role, role_default)
