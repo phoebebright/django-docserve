@@ -45,15 +45,18 @@ Point to the location of your source docs:
 
     DOCSERVE_DOCS_ROOT = os.path.join(BASE_DIR, 'docs')  # source .md files
     DOCSERVE_DOCS_SITE_ROOT = os.path.join(BASE_DIR, 'docs_site')  # where .html files will be put
+    DOCSERVE_SITE_URL = SITE_URL
     
 
 or
 
     DOCSERVE_DOCS_ROOT = BASE_DIR / 'docs'    # source .md files
     DOCSERVE_DOCS_SITE_ROOT = BASE_DIR / 'docs_site'   # where .html files will be put
+    DOCSERVE_SITE_URL = SITE_URL
 
+note that DOCSERVE_SITE_URL = SITE_URL ensures that if the docs site is generated in development it has the correct url for static files and links.
 
-Include URLs
+## Include URLs
 
 In your project's urls.py, include docserve URLs:
 
@@ -117,9 +120,6 @@ If you just want to modify the name in the header you can add your prefix as a s
 Header now appears as My Application User Documentation instead of User Documentation.  
 
 More complex changes should be done by using the overrides method above.
-
-
-
 
 
 ### URLs
@@ -277,6 +277,24 @@ Place the custom `header.html` template in `docs/overrides/partials/`.
 </nav>
 {% endblock %}
 ```
+
+## Change the Order of the Nav
+
+running generate_mkdocs_yml will create a mkdocs.yml file for each role based on the files in the role directory.  The order is alphabetical.  If you want to change this, create a file called .pages in the role directory with the names of the files in the order you want them to appear, one per line.  Any files not mentioned will be added at the end in alphabetical order.
+
+The easiest way to start is to copy and paste from the current mkdocs.yml file.
+
+eg.
+
+    nav:
+      - Index: index.md
+      - Setup A New Course: setup_a_new_course.md
+      - Manage Resources: manage_resources.md
+      - Add Mentors: add_mentors.md
+      - Add Student: add_student.md
+      - Users: users    <---- this is a directory
+      - FAQs: faqs.md
+
 
 ## Rebuild Docs
 
