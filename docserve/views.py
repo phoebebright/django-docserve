@@ -20,8 +20,8 @@ def docs_home(request):
     ignore = {"overrides"}
 
     roles = [
-        d for d in os.listdir(os.path.join(settings.BASE_DIR, 'docs'))
-        if os.path.isdir(os.path.join(settings.BASE_DIR, 'docs', d)) and d not in ignore
+        d for d in os.listdir(os.path.join(settings.BASE_DIR, 'docs_site'))
+        if os.path.isdir(os.path.join(settings.BASE_DIR, 'docs_site', d)) and d not in ignore
     ]
 
     for role in roles:

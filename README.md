@@ -99,6 +99,11 @@ Each time you change the .md files, you will need to rebuild your docs.  To do t
         python manage.py generate_mkdocs_yml
         python manage.py build_docs
 
+or just
+
+        python manage.py make_docs
+
+
 ## Customisation
 
 ### Templates

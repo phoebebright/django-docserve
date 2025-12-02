@@ -10,6 +10,12 @@ class Command(BaseCommand):
     help = 'Generate mkdocs.yml files for each top-level subdirectory in the docs directory.'
 
     def handle(self, *args, **options):
+        #TODO: currently failes if overrides directory does not exist in docs
+        '''
+        Aborted with a configuration error!
+ERROR   -  Config value 'theme': The path set in custom_dir ('/home/django/fish/docs/overrides') does not exist.
+CommandError: Failed to build documentation for role 'judge'.
+        '''
         docs_root = getattr(settings, 'DOCSERVE_DOCS_ROOT', os.path.join(settings.BASE_DIR, 'docs'))
         overrides = getattr(settings, 'DOCSERVE_OVERRIDE_DIRS', ['overrides'])
         site_name_prefix = getattr(settings, 'DOCSERVE_SITE_NAME_PREFIX', '')
