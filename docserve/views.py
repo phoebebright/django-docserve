@@ -37,11 +37,26 @@ def serve_docs(request, role, path=''):
 
     # if extensions are min.js or min.css then just serve them directly
     if path.endswith('.js'):
-        return HttpResponse(open(os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)).read(), content_type='text/javascript')
+        full_path = os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)
+        if os.path.exists(full_path) and os.path.isfile(full_path):
+            return HttpResponse(open(os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)).read(), content_type='text/javascript')
+        else:
+            print("File does NOT exist:", full_path)
+
     if path.endswith('.css'):
-        return HttpResponse(open(os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)).read(), content_type='text/css')
+        full_path = os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)
+        if os.path.exists(full_path) and os.path.isfile(full_path):
+            return HttpResponse(open(os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)).read(), content_type='text/css')
+        else:
+            print("File does NOT exist:", full_path)
+
     if path.endswith('.png'):
-        return HttpResponse(open(os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)).read(), content_type='image/png')
+        full_path = os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)
+        if os.path.exists(full_path) and os.path.isfile(full_path):
+            return HttpResponse(open(os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)).read(),  content_type='image/png')
+        else:
+            print("File does NOT exist:", full_path)
+
     # does this still apply?  trying to load css but role is still a role
     # allow a directories to bypass role checks, eg. have an overrides directory for custom css and js
     overrides = getattr(settings, 'DOCSERVE_OVERRIDE_DIRS', ['overrides'])
