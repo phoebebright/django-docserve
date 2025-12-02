@@ -257,7 +257,7 @@ CommandError: Failed to build documentation for role 'judge'.
         # Write the configuration to the output file
         # with open(output_file, 'w') as f:
         #     yaml.dump(config, f, sort_keys=False)
-
+        print(config)
         return config
 
     def deep_update(self, original, update):
