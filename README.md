@@ -535,6 +535,12 @@ I like to have an index.md for each role and then a list of topics that are dire
 
 ![img.png](img.png)
 
+
+## Troubleshooting Production
+
+Make sure your links are /docs/organiser/ and NOT /docs/organiser/index.html - if you do that it will append a backslash then your assets will be like https://skorie.ngrok.io/docs/organiser/index.html/assets/stylesheets/main.0253249f.min.css and break
+
+
 ## Contributing
 
 Contributions are welcome! Please submit issues and pull requests for any features or bug fixes.

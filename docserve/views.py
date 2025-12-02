@@ -35,6 +35,14 @@ def docs_home(request):
 def serve_docs(request, role, path=''):
     '''serve the documentation and associated files'''
 
+    # if extensions are min.js or min.css then just serve them directly
+    if path.endswith('.js'):
+        return HttpResponse(open(os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)).read(), content_type='text/javascript')
+    if path.endswith('.css'):
+        return HttpResponse(open(os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)).read(), content_type='text/css')
+    if path.endswith('.png'):
+        return HttpResponse(open(os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)).read(), content_type='image/png')
+    # does this still apply?  trying to load css but role is still a role
     # allow a directories to bypass role checks, eg. have an overrides directory for custom css and js
     overrides = getattr(settings, 'DOCSERVE_OVERRIDE_DIRS', ['overrides'])
     if not role in overrides:
