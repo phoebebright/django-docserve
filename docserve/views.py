@@ -20,8 +20,8 @@ def docs_home(request):
     ignore = {"overrides"}
 
     roles = [
-        d for d in os.listdir(os.path.join(settings.BASE_DIR, 'docs_site'))
-        if os.path.isdir(os.path.join(settings.BASE_DIR, 'docs_site', d)) and d not in ignore
+        d for d in os.listdir(os.path.join(settings.BASE_DIR, 'docs'))
+        if os.path.isdir(os.path.join(settings.BASE_DIR, 'docs', d)) and d not in ignore
     ]
 
     for role in roles:
@@ -78,6 +78,7 @@ def serve_docs(request, role, path=''):
         content = f.read()
 
     content_type, _ = mimetypes.guess_type(file_path)
+    logger.info(f"Serving {file_path} with content type {content_type}")
     if not content_type:
         content_type = 'application/octet-stream'
 
