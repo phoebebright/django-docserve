@@ -1,6 +1,6 @@
 # docserve/views.py
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseForbidden, Http404
+from django.http import HttpResponse, HttpResponseForbidden, Http404, FileResponse
 from django.shortcuts import render
 from django.conf import settings
 import os
@@ -37,23 +37,26 @@ def serve_docs(request, role, path=''):
 
     # if extensions are min.js or min.css then just serve them directly
     if path.endswith('.js'):
+        content_type = 'text/javascript'
         full_path = os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)
         if os.path.exists(full_path) and os.path.isfile(full_path):
-            return HttpResponse(open(os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)).read(), content_type='text/javascript')
+            return FileResponse(open(full_path, "rb"), content_type=content_type)
         else:
             print("File does NOT exist:", full_path)
 
     if path.endswith('.css'):
+        content_type = 'text/css'
         full_path = os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)
         if os.path.exists(full_path) and os.path.isfile(full_path):
-            return HttpResponse(open(os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)).read(), content_type='text/css')
+            return FileResponse(open(full_path, "rb"), content_type=content_type)
         else:
             print("File does NOT exist:", full_path)
 
     if path.endswith('.png'):
+        content_type = 'image/png'
         full_path = os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)
         if os.path.exists(full_path) and os.path.isfile(full_path):
-            return HttpResponse(open(os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, path)).read(),  content_type='image/png')
+            return FileResponse(open(full_path, "rb"), content_type=content_type)
         else:
             print("File does NOT exist:", full_path)
 
