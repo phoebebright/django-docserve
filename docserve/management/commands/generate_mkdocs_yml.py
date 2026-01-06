@@ -19,7 +19,7 @@ CommandError: Failed to build documentation for role 'judge'.
         docs_root = getattr(settings, 'DOCSERVE_DOCS_ROOT', os.path.join(settings.BASE_DIR, 'docs'))
         overrides = getattr(settings, 'DOCSERVE_OVERRIDE_DIRS', ['overrides'])
         site_name_prefix = getattr(settings, 'DOCSERVE_SITE_NAME_PREFIX', '')
-        domain = getattr(settings, "DOCSERVE_SITE_URL", settings.SITE_URL)
+        domain = settings.DOCSERVE_SITE_URL.lstrip('/')
 
         # make domain available in generate_mkdocs_yml
         self.domain = domain

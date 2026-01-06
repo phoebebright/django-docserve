@@ -30,6 +30,6 @@ class DocServeMixin:
         eg.     path('docs/', include(('docserve.urls', 'docserve'), namespace='docserve')),
         add 'docs' to your url
         """
-        domain = getattr(settings, "DOCSERVE_SITE_URL", settings.SITE_URL).lstrip('/')
+        domain = settings.DOCSERVE_SITE_URL.lstrip('/')
         page = page.lstrip('/')
         return f"{domain}/docs/{page}"
