@@ -29,11 +29,13 @@ def docs_home(request):
     available_roles = []
 
     # used to hold static data like css that will be used to override other data - a bit confusing to have it here
-    ignore = {"overrides"}
+    ignore = getattr(settings, 'DOCSERVE_OVERRIDE_DIRS', ['overrides'])
+
+    docs_root = getattr(settings, 'DOCSERVE_DOCS_ROOT', os.path.join(settings.BASE_DIR, 'docs'))
 
     roles = [
-        d for d in os.listdir(os.path.join(settings.BASE_DIR, 'docs'))
-        if os.path.isdir(os.path.join(settings.BASE_DIR, 'docs', d)) and d not in ignore
+        d for d in os.listdir(docs_root)
+        if os.path.isdir(os.path.join(docs_root, d)) and d not in ignore
     ]
 
     for role in roles:
