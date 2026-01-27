@@ -238,7 +238,7 @@ CommandError: Failed to build documentation for role 'judge'.
                 'name': 'material',
                 'custom_dir': 'overrides',
             },
-            'use_directory_urls': True,
+            'use_directory_urls': False,
             'docs_dir': role,
             'site_url': f'{self.domain}/docs/{role}/',
         }

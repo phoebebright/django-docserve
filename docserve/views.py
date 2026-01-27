@@ -16,7 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 def serve_docs_asset(request, role, path):
-    resp = static_serve(request, path, document_root=str(Path(settings.DOCS_ROOT)/role/"assets"))
+    # assets are in the built site directory
+    document_root = os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, "assets")
+    resp = static_serve(request, path, document_root=document_root)
     patch_cache_control(resp, public=True, max_age=31536000, immutable=True)
     return resp
 
@@ -52,7 +54,7 @@ def serve_docs(request, role, path=''):
         if os.path.exists(full_path) and os.path.isfile(full_path):
             return FileResponse(open(full_path, "rb"), content_type=content_type)
         else:
-            print("File does NOT exist:", full_path)
+            logger.warning(f"File does NOT exist: {full_path}")
 
     if path.endswith('.css'):
         content_type = 'text/css'
@@ -60,7 +62,7 @@ def serve_docs(request, role, path=''):
         if os.path.exists(full_path) and os.path.isfile(full_path):
             return FileResponse(open(full_path, "rb"), content_type=content_type)
         else:
-            print("File does NOT exist:", full_path)
+            logger.warning(f"File does NOT exist: {full_path}")
 
     if path.endswith('.png'):
         content_type = 'image/png'
@@ -68,7 +70,7 @@ def serve_docs(request, role, path=''):
         if os.path.exists(full_path) and os.path.isfile(full_path):
             return FileResponse(open(full_path, "rb"), content_type=content_type)
         else:
-            print("File does NOT exist:", full_path)
+            logger.warning(f"File does NOT exist: {full_path}")
 
     # does this still apply?  trying to load css but role is still a role
     # allow a directories to bypass role checks, eg. have an overrides directory for custom css and js
@@ -109,10 +111,15 @@ def serve_docs(request, role, path=''):
             path += '.html'
         # If the path has a file extension, assume it's an asset file and leave it as is
 
+    # If path.endswith('.md'), it's likely a source file link that wasn't converted
+    # We should try to serve the .html version instead if it exists
+    if path.endswith('.md'):
+        path = path[:-3] + '.html'
+
     file_path = os.path.join(docs_root, path)
 
     if not os.path.exists(file_path):
-        raise Http404("Page not found")
+        raise Http404(f"Page not found: {path}")
 
     with open(file_path, 'rb') as f:
         content = f.read()
