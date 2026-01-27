@@ -5,10 +5,20 @@ from django.shortcuts import render
 from django.conf import settings
 import os
 import mimetypes
+from pathlib import Path
+from django.views.static import serve as static_serve
 
 import logging
+from django.utils.cache import patch_cache_control
+
 logger = logging.getLogger(__name__)
 
+
+
+def serve_docs_asset(request, role, path):
+    resp = static_serve(request, path, document_root=str(Path(settings.DOCS_ROOT)/role/"assets"))
+    patch_cache_control(resp, public=True, max_age=31536000, immutable=True)
+    return resp
 
 @login_required
 def docs_home(request):
