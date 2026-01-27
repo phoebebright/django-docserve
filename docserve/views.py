@@ -48,9 +48,12 @@ def docs_home(request):
 @login_required
 def serve_docs(request, role, path=''):
     '''serve the documentation and associated files'''
+    from django.shortcuts import redirect
 
+    original_path = path
     # remove trailing slash if it is there
-    if path.endswith('/'):
+    has_trailing_slash = path.endswith('/')
+    if has_trailing_slash:
         path = path[:-1]
 
     # if assets/ is in the path, it might be a nested request for a global asset
@@ -143,6 +146,15 @@ def serve_docs(request, role, path=''):
     # We should try to serve the .html version instead if it exists
     if path.endswith('.md'):
         path = path[:-3] + '.html'
+
+    # If the original request had a trailing slash, but the resolved path is a file, redirect
+    if has_trailing_slash:
+        # We don't want to redirect if it was a directory that now has /index.html appended
+        # as the browser SHOULD have a trailing slash for directories usually, 
+        # but MkDocs with use_directory_urls: False (which we set) prefers file.html
+        if path.endswith('.html') and not path.endswith('index.html'):
+             # Redirect to the same URL but without the trailing slash
+             return redirect(request.path[:-1])
 
     file_path = os.path.join(docs_root, path)
 
