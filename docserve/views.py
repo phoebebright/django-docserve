@@ -47,6 +47,36 @@ def docs_home(request):
 def serve_docs(request, role, path=''):
     '''serve the documentation and associated files'''
 
+    # remove trailing slash if it is there
+    if path.endswith('/'):
+        path = path[:-1]
+
+    # if assets/ is in the path, it might be a nested request for a global asset
+    if 'assets/' in path:
+        # extract the path from assets/ onwards
+        asset_path = path[path.find('assets/'):]
+        full_path = os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, asset_path)
+        if os.path.exists(full_path) and os.path.isfile(full_path):
+            content_type, _ = mimetypes.guess_type(full_path)
+            if not content_type:
+                if full_path.endswith('.css'): content_type = 'text/css'
+                elif full_path.endswith('.js'): content_type = 'text/javascript'
+                else: content_type = 'application/octet-stream'
+            return FileResponse(open(full_path, "rb"), content_type=content_type)
+
+    # if there is an extension and it's not found at the original path, 
+    # it might be a relative link that went wrong. Try to find it by stripping path components.
+    if '.' in os.path.basename(path):
+        original_path = path
+        temp_path = path
+        while '/' in temp_path:
+            temp_path = temp_path.split('/', 1)[1]
+            full_path = os.path.join(settings.DOCSERVE_DOCS_SITE_ROOT, role, temp_path)
+            if os.path.exists(full_path) and os.path.isfile(full_path):
+                content_type, _ = mimetypes.guess_type(full_path)
+                logger.info(f"Serving {full_path} as fallback for {original_path}")
+                return FileResponse(open(full_path, "rb"), content_type=content_type or 'application/octet-stream')
+
     # if extensions are min.js or min.css then just serve them directly
     if path.endswith('.js'):
         content_type = 'text/javascript'
@@ -98,10 +128,6 @@ def serve_docs(request, role, path=''):
         # Serve the documentation home page
         path = 'index.html'
     else:
-        # remove trailing slash if it is there
-        if path.endswith('/'):
-            path = path[:-1]
-
         file_path = os.path.join(docs_root, path)
         if os.path.isdir(file_path):
             # If the path is a directory, append 'index.html'
