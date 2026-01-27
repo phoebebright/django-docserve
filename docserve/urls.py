@@ -10,5 +10,5 @@ urlpatterns = [
     path('<str:role>/assets/<path:path>', views.serve_docs_asset, name='serve_docs_asset'),
 
     path('<str:role>/', views.serve_docs, name='serve_docs_index'),
-    path('<str:role>/<path:path>/', views.serve_docs, name='serve_docs'),
+    path('<str:role>/<path:path>', views.serve_docs, name='serve_docs'),
 ]

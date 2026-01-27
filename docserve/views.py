@@ -96,6 +96,10 @@ def serve_docs(request, role, path=''):
         # Serve the documentation home page
         path = 'index.html'
     else:
+        # remove trailing slash if it is there
+        if path.endswith('/'):
+            path = path[:-1]
+
         file_path = os.path.join(docs_root, path)
         if os.path.isdir(file_path):
             # If the path is a directory, append 'index.html'
