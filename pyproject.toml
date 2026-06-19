@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "django-docserve"
-version = "1.0.2"
+version = "1.0.3"
 description = "A reusable Django app to serve MkDocs documentation based on user roles."
 readme = "README.md"
 license = "MIT"
