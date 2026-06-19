@@ -301,10 +301,42 @@ eg.
       - FAQs: faqs.md
 
 
+## Preserve a Hand-Crafted mkdocs.yml
+
+By default `generate_mkdocs_yml` now preserves an existing `mkdocs_{role}.yml`: it
+leaves the file untouched and only appends markdown files that are not yet
+referenced anywhere in its `nav` to the bottom of the list. This lets you
+hand-craft each `mkdocs_{role}.yml` yourself — choosing titles, order and nesting
+freely — while new files still get picked up automatically. The rest of the config
+(theme, site_url, existing nav order and titles) is preserved exactly as you wrote
+it.
+
+This behaviour is controlled by:
+
+    DOCSERVE_PRESERVE_YML = True   # default
+
+Set it to `False` to restore the original behaviour, where every run rebuilds each
+`mkdocs_{role}.yml` from scratch and discards any direct edits. (The `.pages`
+mechanism above is an alternative way to control order that is always regenerated.)
+
+Notes:
+
+- A new file is appended as `- Title: path/to/file.md`, with the title derived from
+  the filename. Move or rename it within the nav afterwards as you like.
+- A file counts as "already included" if it appears anywhere in the nav, including
+  inside nested sections — it will not be added twice.
+- If no `mkdocs_{role}.yml` exists yet, the file is generated normally the first
+  time (so the first run still bootstraps it), then preserved on subsequent runs.
+- The default is `True`. Set `DOCSERVE_PRESERVE_YML = False` for the original
+  always-regenerate behaviour.
+
 ## Rebuild Docs
 
 After changes to settings, run python manage.py generate_mkdocs_yml
-to rebuild the .yaml files that define each set of role docs.  This will override any customisation you have done.
+to rebuild the .yaml files that define each set of role docs.  By default
+(`DOCSERVE_PRESERVE_YML = True`) existing files are preserved and only new files are
+appended (see above); set `DOCSERVE_PRESERVE_YML = False` to override any
+customisation you have done and regenerate from scratch.
 
 Then run python manage.py build_docs to rebuild the html files.
 

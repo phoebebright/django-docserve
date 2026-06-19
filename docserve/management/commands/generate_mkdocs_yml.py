@@ -1,9 +1,29 @@
 # docserve/management/commands/generate_mkdocs_yml.py
 
 import os
+import re
 import yaml
+from ruamel.yaml import YAML
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
+
+# PyYAML serialises a Python callable as `!!python/name:module.func ''`, but
+# MkDocs' loader requires the python/name tag to carry an *empty* value and
+# rejects the trailing ''. This pattern strips it so the tag is valid YAML for
+# MkDocs (used for the mermaid superfence `format`).
+_PYTHON_NAME_EMPTY = re.compile(r"(!!python/name:[\w.]+) ''")
+
+
+def _round_trip_yaml() -> YAML:
+    """
+    A ruamel.yaml round-trip parser used when preserving a hand-crafted
+    mkdocs_{role}.yml so comments, key order and formatting survive an append.
+    """
+    y = YAML()
+    y.preserve_quotes = True
+    y.width = 4096  # don't wrap long lines (e.g. urls)
+    y.indent(mapping=2, sequence=4, offset=2)
+    return y
 
 
 class Command(BaseCommand):
@@ -21,6 +41,12 @@ CommandError: Failed to build documentation for role 'judge'.
         site_name_prefix = getattr(settings, 'DOCSERVE_SITE_NAME_PREFIX', '')
         domain = settings.DOCSERVE_SITE_URL.lstrip('/')
 
+        # When True (the default), an existing mkdocs_{role}.yml is treated as
+        # hand-crafted: it is not regenerated/overwritten. Instead we only append
+        # markdown files that are not already referenced in its nav to the bottom of
+        # the list. Set to False to always regenerate from scratch.
+        preserve_yml = getattr(settings, 'DOCSERVE_PRESERVE_YML', True)
+
         # make domain available in generate_mkdocs_yml
         self.domain = domain
 
@@ -37,11 +63,24 @@ CommandError: Failed to build documentation for role 'judge'.
             output_file = os.path.join(docs_root, f'mkdocs_{role}.yml')
             site_name = f"{site_name_prefix}{role.capitalize()} Documentation"
 
+            if preserve_yml and os.path.exists(output_file):
+                added = self.append_missing_to_existing(output_file, docs_dir)
+                if added:
+                    self.stdout.write(self.style.SUCCESS(
+                        f"Updated {output_file} for role '{role}': appended {len(added)} new file(s)."
+                    ))
+                    for rel in added:
+                        self.stdout.write(self.style.WARNING(f"  + {rel}"))
+                else:
+                    self.stdout.write(self.style.SUCCESS(
+                        f"Preserved {output_file} for role '{role}': no new files to add."
+                    ))
+                continue
+
             nav = self.build_nav(docs_dir, role, rel_base='')
             config = self.make_config(nav, site_name, role)
 
-            with open(output_file, 'w') as f:
-                yaml.dump(config, f, sort_keys=False)
+            self._write_config(config, output_file)
 
             self.stdout.write(self.style.SUCCESS(f"Generated {output_file} for role '{role}'."))
 
@@ -182,6 +221,95 @@ CommandError: Failed to build documentation for role 'judge'.
 
         return entries
 
+    # -------------------------
+    # PRESERVE / APPEND-ONLY MODE
+    # -------------------------
+
+    def append_missing_to_existing(self, output_file: str, docs_dir: str) -> list:
+        """
+        Load an existing mkdocs_{role}.yml, leave it otherwise untouched, and append
+        any markdown files under docs_dir that are not already referenced in its nav
+        to the bottom of the top-level nav list. Returns the list of relative paths
+        appended (empty if nothing changed).
+        """
+        ryaml = _round_trip_yaml()
+        try:
+            with open(output_file, 'r', encoding='utf-8') as f:
+                config = ryaml.load(f)
+        except Exception as e:
+            self.stdout.write(self.style.WARNING(
+                f"[preserve] Failed to parse {output_file!r}, regenerating instead: {e}"
+            ))
+            return []
+
+        if config is None:
+            config = {}
+
+        if not isinstance(config, dict):
+            self.stdout.write(self.style.WARNING(
+                f"[preserve] {output_file!r} is not a mapping, skipping."
+            ))
+            return []
+
+        nav = config.get('nav')
+        if not isinstance(nav, list):
+            nav = []
+            config['nav'] = nav
+
+        referenced = self._collect_referenced_md(nav)
+        on_disk = self._scan_md_files(docs_dir)
+
+        missing = [rel for rel in on_disk if rel not in referenced]
+        # index.md first, then alphabetical, so appended order is predictable
+        missing.sort(key=lambda x: (os.path.basename(x).lower() != 'index.md', x.lower()))
+
+        if not missing:
+            return []
+
+        for rel in missing:
+            nav.append({self._default_page_title(rel): rel})
+
+        with open(output_file, 'w') as f:
+            ryaml.dump(config, f)
+
+        return missing
+
+    def _collect_referenced_md(self, nav) -> set:
+        """
+        Walk an mkdocs nav structure and collect every markdown path it references
+        (normalised to posix-style relative paths).
+        """
+        referenced = set()
+
+        def walk(node):
+            if isinstance(node, str):
+                if node.lower().endswith('.md'):
+                    referenced.add(node.replace('\\', '/'))
+            elif isinstance(node, list):
+                for item in node:
+                    walk(item)
+            elif isinstance(node, dict):
+                for value in node.values():
+                    walk(value)
+
+        walk(nav)
+        return referenced
+
+    def _scan_md_files(self, docs_dir: str) -> list:
+        """
+        Recursively list all markdown files under docs_dir as posix-style paths
+        relative to docs_dir, skipping hidden files/directories.
+        """
+        found = []
+        for root, dirs, files in os.walk(docs_dir):
+            dirs[:] = [d for d in dirs if not d.startswith('.')]
+            for f in files:
+                if f.startswith('.') or not f.lower().endswith('.md'):
+                    continue
+                rel = os.path.relpath(os.path.join(root, f), docs_dir).replace('\\', '/')
+                found.append(rel)
+        return found
+
     def _parse_pages_item(self, item):
         """
         Normalize a .pages nav item to (label, target_str).
@@ -254,11 +382,79 @@ CommandError: Failed to build documentation for role 'judge'.
         # Then merge role-specific settings
         self.deep_update(config, custom_settings)
 
-        # Write the configuration to the output file
-        # with open(output_file, 'w') as f:
-        #     yaml.dump(config, f, sort_keys=False)
-        print(config)
+        # Ensure mermaid diagrams render (material bundles mermaid.js; it just
+        # needs the superfence wired up). Added after merges so it survives any
+        # user-supplied markdown_extensions.
+        if getattr(settings, 'DOCSERVE_ENABLE_MERMAID', True):
+            self._ensure_mermaid(config)
+
         return config
+
+    def _ensure_mermaid(self, config: dict) -> None:
+        """
+        Inject the mkdocs-material mermaid superfence into config's
+        `markdown_extensions`, merging with whatever the user already declared.
+        Produces:
+            markdown_extensions:
+              - pymdownx.superfences:
+                  custom_fences:
+                    - name: mermaid
+                      class: mermaid
+                      format: !!python/name:pymdownx.superfences.fence_code_format
+        """
+        try:
+            from pymdownx.superfences import fence_code_format
+        except ImportError:
+            self.stdout.write(self.style.WARNING(
+                "[mermaid] pymdown-extensions not installed; skipping mermaid "
+                "fence config. Install it (it ships with mkdocs-material)."
+            ))
+            return
+
+        exts = config.setdefault('markdown_extensions', [])
+        if not isinstance(exts, list):
+            self.stdout.write(self.style.WARNING(
+                "[mermaid] markdown_extensions is not a list; skipping."
+            ))
+            return
+
+        # Locate (or create) the pymdownx.superfences entry as a dict so we can
+        # attach options. It may be present as a bare string or as a dict.
+        superfences = None
+        for i, item in enumerate(exts):
+            if item == 'pymdownx.superfences':
+                superfences = {'pymdownx.superfences': {}}
+                exts[i] = superfences
+                break
+            if isinstance(item, dict) and 'pymdownx.superfences' in item:
+                if not isinstance(item.get('pymdownx.superfences'), dict):
+                    item['pymdownx.superfences'] = {}
+                superfences = item
+                break
+        if superfences is None:
+            superfences = {'pymdownx.superfences': {}}
+            exts.append(superfences)
+
+        opts = superfences['pymdownx.superfences']
+        fences = opts.setdefault('custom_fences', [])
+        if any(isinstance(f, dict) and f.get('name') == 'mermaid' for f in fences):
+            return  # already configured — don't duplicate
+
+        fences.append({
+            'name': 'mermaid',
+            'class': 'mermaid',
+            'format': fence_code_format,
+        })
+
+    def _write_config(self, config: dict, output_file: str) -> None:
+        """
+        Dump config to YAML, repairing the python/name tag PyYAML emits for the
+        mermaid fence callable so MkDocs can load it.
+        """
+        raw = yaml.dump(config, sort_keys=False)
+        raw = _PYTHON_NAME_EMPTY.sub(r'\1', raw)
+        with open(output_file, 'w') as f:
+            f.write(raw)
 
     def deep_update(self, original, update):
         """
